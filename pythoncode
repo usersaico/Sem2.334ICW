@@ -1,0 +1,484 @@
+#Importing Module
+import mysql.connector
+#Open Database Connection With a Dictionary
+DBLog={'host':'localhost',
+       'database':'20210715 334 cw',
+       'user':'root',
+       'password':''}
+db = mysql.connector.connect(**DBLog)
+
+#Prepare a Cursor Object Using Cursor() Method
+cursor=db.cursor()
+
+ #Defining Return to Main Menu
+def ReturnMenu():
+     running= True
+     if running:
+        answer = str(input("\nReturn to the Main Menu (Y/N): "))
+
+        if (answer == "y" or answer == "Y"):
+                 appExit = False
+                 
+        elif (answer == "n" or answer == "N"):
+                    appExit = True
+                    exit()
+        else:
+            print("\n----Enter a Valid Option----")
+            ReturnMenu()
+
+
+
+#--------------------------------------------1.Show Books----------------------------------------#
+
+ #Show Books
+def ShowBooks():
+    if num==1:   
+       query=("SELECT * FROM books")
+ #Execute SQL Query Using execute() Method         
+       cursor.execute(query)
+ #Fetch Results Using Fetchall() method     
+       data=cursor.fetchall()
+       for data in data:
+           print() 
+           print(data)
+       ReturnMenu()
+
+#--------------------------------------------2.Chapters----------------------------------------------#
+ #Chapter Menu
+def ChapMenu():
+    ASChap=True
+    print("\n1.View Book Chapters\n\n2.Create Chapter Information ")
+    ASChap=int(input("\nEnter Your Preferred Choice:"))
+    if ASChap==1:
+         ShowChapter()        
+    elif ASChap==2:
+         AddChapter()   
+    else:
+       print("\n----Please Enter a Valid Option----")
+       ChapMenu()
+
+
+ # -----------------------------------------------2.1 Show Chapters--------------------------------------#
+def ShowChapter():
+   query=("SELECT * FROM books")
+   cursor.execute(query)
+   data=cursor.fetchall()
+   for data in data:
+        print()
+        print(data)  
+   bookNo=input("\nEnter The Book Number:")
+   cursor.execute("SELECT * FROM chapter WHERE bookNo LIKE %s", ("%" + bookNo + "%",))
+   data=cursor.fetchall()
+   for data in data:  
+          print(data)
+   if not data:
+       print("\n----No Book Chapters Found----")
+   ReturnMenu()
+       
+ #--------------------------------------------2.2 Add Chapter------------------------------------------#
+       
+ #Getting User Input
+def AddChapter():
+ #Getting User Input of the Adding Book
+    bookNo=input("\nEnter The Book Number That You Want Add Chapters:")
+    print()
+
+ #Getting Information About The Given Book Number
+    cursor.execute("SELECT * FROM books WHERE bookNo LIKE %s", ("%" + bookNo + "%",))
+    data=cursor.fetchone()
+    if data!=None:
+          print(data)
+    else:
+       print("\n----No Book Record Found----")
+
+ #Getting Chapter Information From the User
+    chapterNo=int(input("\nEnter the Chapter Number :"))
+    chapterName=input("\nEnter the Name of the Chapter:")
+    startNo=int(input("\nEnter the Start Page Number of Chapter:"))
+    endNo=input("\nEnter the Last Page Number of Chapter:")
+
+ #Adding Details to the Database Using execute()method
+    uservalues="INSERT INTO chapter(bookNo,chapterNo,chapterName,startNo,endNo) VALUES(%s,%s,%s,%s,%s)"  
+    dbvalues=(bookNo,chapterNo,chapterName,startNo,endNo)
+    cursor.execute(uservalues,dbvalues)
+
+ #Commit the Changes
+    db.commit()
+    print("\n----Chapter Added Successfully----")
+    AddAnotherChapter()
+    
+ #Defining Add Another Chapter 
+def AddAnotherChapter():
+    nextchap=True
+    if nextchap:
+     answer = str(input("\nAdd Another Chapter (Y/N): "))
+
+     if (answer == "y" or answer == "Y"):
+                appExit = False
+                AddChapter()
+     elif (answer == "n" or answer == "N"):
+                ReturnMenu()
+     else:
+            answer = str(input("Add Another Chapter (Y/N): "))
+            ReturnMenu()
+
+
+
+#-------------------------------------------3.Add Subject Information----------------------------------#
+
+ #Menu
+def SubMenu():
+    Sub=True
+    print("\n1.Create a Subject\n\n2.Show Available Book Subjects\n\n3.Seach a Book By Subject Code\n")
+    Sub=int(input("Enter Your Choice:"))
+    if Sub==1:
+        CreateSubject()
+    elif Sub==2:
+        AvailSubjects()
+        
+    elif Sub==3:
+        SearchSubjects() 
+    else:
+        print("\n----Please Enter a Valid Number----\n")
+        SubMenu()
+
+ #-----------------------------------------3.1 Create a Subjects------------------------------------#     
+def CreateSubject():
+    subjectCode=str(input("\nEnter Subject Code To Create :"))
+    subjectName=str(input("\nEnter the Name of the Subject Code:"))
+ #Adding Details to the Database Using execute()method        
+    userdbvalues="INSERT INTO subject(subjectCode,subjectName)VALUES(%s,%s)"
+    dbsavevalues=(subjectCode,subjectName)
+    cursor.execute(userdbvalues,dbsavevalues)
+ #Commit the Changes
+    db.commit()
+    print("\n----Subject Added Successfully----")
+    ReturnMenu()
+
+#------------------------------------------3.2 Show Available Subjects  ---------------------------------------#
+def AvailSubjects():
+     print("\nThe Available Subjects are Listing...")
+     print("Subject Name","|"," Subject Code")   
+     query=("SELECT subjectName,subjectCode FROM subject")
+ #Execute SQL Query Using execute() Method         
+     cursor.execute(query)
+ #Fetch Results Using Fetchall() method     
+     data=cursor.fetchall()
+     for data in data:
+          print(data)
+     ReturnMenu()
+    
+
+ #-----------------------------------------3.3 Search By Subject Code--------------------------------------#
+def SearchSubjects():
+    subjectCode=input("\nEnter the Subject Code To Search:")
+    cursor.execute("SELECT * FROM books WHERE subjectCode LIKE %s", ("%" + subjectCode + "%",))
+    data=cursor.fetchall()
+    for data in data:  
+          print(data)
+    if not data:       
+     print("----No Book Record Found----")
+        
+    ReturnMenu()
+
+
+  
+#-------------------------------------------4.Book Query Search----------------------------------#
+
+ #Book Search Menu
+     
+def SearchMenu():
+    search=True
+    print("\n1.Search a Book By Number\n2.Search a Book By Title\n3.Search a Book by Publisher")     
+    print()      
+    search=int(input("Do you Want to Search a Book By?:"))
+
+    if search==1:
+        SbyNum()
+             
+    elif search==2:
+        SbyTitle()
+                               
+    elif search==3:
+        SbyPub()
+        
+    else:
+        print("----Please Enter a Valid Number----")
+        SearchMenu()
+  
+
+ #-------------------------------------------4.1 Search by Book Number---------------------------------#
+def SbyNum():
+    bookNo=input("\nEnter the Book Number:")
+    cursor.execute("SELECT * FROM books WHERE bookNo LIKE %s", ("%" + bookNo + "%",))
+    data=cursor.fetchall()
+    for data in data:  
+          print(data)
+    if not data:
+         print("----No Book Record Found----")
+    ReturnMenu()   
+    
+ #-------------------------------------------4.2 Search by book title------------------------------------#
+def SbyTitle():
+    title=input("\nEnter the Title of The Book:")
+    cursor.execute("SELECT * FROM books WHERE title LIKE %s", ("%" + title + "%",))
+    data=cursor.fetchall()
+    for data in data:  
+          print(data)
+    if not data:
+         print("----No Book Record Found----")
+    ReturnMenu()   
+    
+ #--------------------------------------------4.3 Search by publisher-----------------------------------#
+def SbyPub():
+    publisher=input("\nEnter the Publisher's Name:")
+    cursor.execute("SELECT * FROM books WHERE publisher LIKE %s", ("%" + publisher + "%",))
+    data=cursor.fetchall()
+    for data in data:  
+          print(data)
+    if not data:
+         print("----No Book Record Found----")
+    ReturnMenu()   
+    
+    
+   
+#-------------------------------------------5.Add/Edit/Delete Books----------------------------------#
+def AEDMenu():
+    AED=True
+    print("\n1.Add a Book\n\n2.Edit a Book\n\n3.Delete a Book\n")
+    AED=int(input("Enter Your Choice:"))
+    if AED==1:
+        AddBook()
+    elif AED==2:
+        EditBook()
+    elif AED==3:
+        DeleteBook()
+    else:
+        print("\n----Please Enter a Valid Number----\n")
+        AEDMenu()
+
+ #--------------------------------------------------5.1 Add Book-----------------------------------#
+def AddBook():
+    print("\nYou Have To Enter The Following Details\n\n1.Book Number\n2.Title Of The Book\n3.Subject of The Book\n4.Author Of The Book\n5.Publisher Of The Book\n6.Price Of The Book\n7.Location Of The Book\n8.ISBN Number Of The Book\n9.Number Of Pages In The Book")
+         
+ #Getting User Input of the Adding Book
+    bookNo=int(input("\nEnter Book Number:"))
+    title=input("\nEnter the Title of the Book:")
+    subjectCode=input("\nEnter the SubjectCode of the Book:")
+    author=input("\nEnter the Name of the Author:")
+    publisher=input("\nEnter the Name of the Publisher:")
+    price=float(input("\nEnter the Price of the Book:"))
+    location=input("\nLocation of the Book:")
+    isbn=input("\nEnter the ISBN Number of the Book:")
+    pages=int(input("\nEnter the Number of Pages in the Book:"))
+    print()
+
+ #Adding Details to the Database Using execute()method        
+    userdbvalues="INSERT INTO books(bookNo,title,subjectCode,author,publisher,price,location,isbn,pages)VALUES(%s,%s,%s,%s,%s,%s,%s,%s,%s)"
+    dbsavevalues=(bookNo,title,subjectCode,author,publisher,price,location,isbn,pages)
+    cursor.execute(userdbvalues,dbsavevalues)
+ #Commit the Changes        
+    db.commit()
+    print(bookNo,title,subjectCode,author,publisher,price,location,isbn,pages)
+    print()
+    print("----",cursor.rowcount,"Book Record Added Successfully----")
+
+ #Close the connection with the Server        
+    db.close()
+ #Return Main Menu         
+    ReturnMenu()
+
+
+ #-------------------------------------------------5.2 Edit Book------------------------------------#
+
+#Defining SuccessEdit message in Edit a Book
+def SuccessfullEdit():
+     print("\n----The Book Was Edited Successfully----")
+     ReturnMenu()
+      
+ #Defining Show Query               
+def ShowQuery():
+     query=("SELECT * FROM books")
+     cursor.execute(query)
+     data=cursor.fetchone()
+     for data in data:
+      print(data)     
+      
+ #Getting User Input
+def EditBook():
+    edit=True    
+
+ #Menu
+def EditBook():
+    edit=True
+         
+    bookNo=input("\nEnter the Book Number That You Want to Edit :")
+    print()
+    query=("SELECT title,author,publisher,price,location,isbn,pages FROM books WHERE bookNo="+bookNo+" ")
+    cursor.execute(query)
+    data=cursor.fetchall()
+    for data in data:  
+          print(data)
+    if not data:
+         print("\n----Please Enter a Valid Number----\n")
+         
+    print("\n1.Book Title\n2.Author\n3.Publisher\n4.Price\n5.Location\n6.ISBN\n7.Pages\n")
+    edit=int(input("Select What You Want to Edit:"))
+ #-----------------------------------------------5.2.1 Edit The Title-----------------------------------------------#
+    if edit==1:
+        title=input("\nEnter the New Book Title:")
+        update= "UPDATE books SET title='"+title+"' WHERE bookNo=" +bookNo
+        cursor.execute(update)
+        db.commit()
+        print()
+        query=("SELECT title,author,publisher,price,location,isbn,pages FROM books WHERE bookNo="+bookNo+" ")
+        cursor.execute(query)
+        data=cursor.fetchall()
+        print(data)
+        SuccessfullEdit()
+              
+ #-----------------------------------------------5.2.2 Edit The Author-----------------------------------------------#
+    elif edit==2:
+        author=input("\nEnter the New Book Author:")
+        update= "UPDATE books SET author='"+author+"' WHERE bookNo=" +bookNo
+        cursor.execute(update)
+        db.commit()
+        print()
+        query=("SELECT title,author,publisher,price,location,isbn,pages FROM books WHERE bookNo="+bookNo+" ")
+        cursor.execute(query)
+        data=cursor.fetchall()
+        print(data)
+        SuccessfullEdit() 
+        
+        
+ #-----------------------------------------------5.2.3 Edit The Publisher----------------------------------------------- #            
+    elif edit==3:
+        publisher=input("\nEnter the New Publisher:")
+        update= "UPDATE books SET publisher='"+publisher+"' WHERE bookNo=" +bookNo
+        cursor.execute(update)
+        db.commit()
+        print()
+        query=("SELECT title,author,publisher,price,location,isbn,pages FROM books WHERE bookNo="+bookNo+" ")
+        cursor.execute(query)
+        data=cursor.fetchall()
+        print(data)
+        SuccessfullEdit() 
+        
+             
+ #-----------------------------------------------5.2.4 Edit The Price-----------------------------------------------#             
+    elif edit==4:
+        price=input("\nEnter the New Price:")
+        update= "UPDATE books SET price='"+price+"' WHERE bookNo=" +bookNo
+        cursor.execute(update)
+        db.commit()
+        print()
+        query=("SELECT title,author,publisher,price,location,isbn,pages FROM books WHERE bookNo="+bookNo+" ")
+        cursor.execute(query)
+        data=cursor.fetchall()
+        print(data)
+        SuccessfullEdit() 
+        
+             
+ #-----------------------------------------------5.2.5 Edit The Location----------------------------------------------- #
+    elif edit==5:
+        location=input("\nEnter New Location of the Book:")
+        update= "UPDATE books SET location='"+location+"' WHERE bookNo=" +bookNo
+        cursor.execute(update)
+        db.commit()
+        print()
+        query=("SELECT title,author,publisher,price,location,isbn,pages FROM books WHERE bookNo="+bookNo+" ")
+        cursor.execute(query)
+        data=cursor.fetchall()
+        print(data)
+        SuccessfullEdit() 
+             
+ #-----------------------------------------------5.2.6 Edit The ISBN ----------------------------------------------- #            
+    elif edit==6:
+        isbn=input("\nEnter New ISBN Number of the Book:")
+        update= "UPDATE books SET isbn='"+isbn+"' WHERE bookNo=" +bookNo
+        cursor.execute(update)
+        db.commit()
+        print()
+        query=("SELECT title,author,publisher,price,location,isbn,pages FROM books WHERE bookNo="+bookNo+" ")
+        cursor.execute(query)
+        data=cursor.fetchall()
+        print(data)
+        SuccessfullEdit() 
+ #-----------------------------------------------5.2.7 Edit The Pages-----------------------------------------------#
+    elif edit==7:
+        pages=input("\nEnter the New Amount of Pages in The Book:")
+        update= "UPDATE books SET pages='"+pages+"' WHERE bookNo=" +bookNo
+        cursor.execute(update)
+        db.commit()
+        print()
+        query=("SELECT title,author,publisher,price,location,isbn,pages FROM books WHERE bookNo="+bookNo+" ")
+        cursor.execute(query)
+        data=cursor.fetchall()
+        print(data)
+        SuccessfullEdit() 
+
+    else:
+        print("\n----Please Enter a Valid Option----")
+        EditBook()
+
+        
+
+
+ #--------------------------------------------- 5.3 Delete Books---------------------------------------#
+def DeleteBook():
+    
+    query=("SELECT * FROM books")
+    cursor.execute(query)
+    data=cursor.fetchall()
+    if data!=None:
+      for data in data:
+         print(data)
+    bookNo=input("\nEnter The Number Of The Book You want to Delete:")
+    cursor.execute("DELETE FROM books WHERE bookNo=" + bookNo +"")
+    db.commit()
+    print()
+    print("----The Book Number" ,bookNo," Was Deleted Successfully----")
+    db.close()
+    ReturnMenu()          
+  
+#------------------------------------------Main Menu--------------------------------------------------#
+
+
+num=True
+while num:
+     print("\n---------------------WELCOME TO ABC BOOK STORE------------------")
+     print("\n1.Books(Display Available Books)\n\n2.Book Chapters(Add/Preview Chapters)\n\n3.Subjects(Add/Search/Show Book Categories)\n\n4.Books Query(Search Books)\n\n5.Add/Edit/Delete Books\n\n6.Exit")
+     num=int(input("\nEnter Your Preferred Choice:"))
+ #Show Books
+     if num==1:
+       ShowBooks()
+       
+ #Show/Add Chapters      
+     elif num==2:
+       ChapMenu()
+       
+ #Show/Add Subject  
+     elif num==3:
+       SubMenu()
+       
+ #Search Books      
+     elif num==4:
+       SearchMenu()
+
+ #Add/Edit/Delete Books     
+     elif num==5:
+       AEDMenu()     
+ #Exit    
+     elif num==6:
+        exit()
+        
+ #If the User Enter an Invalid Number        
+     else:
+        print("\n----Please Enter a Valid Number----")
+        
+
+
+
+
+
+
